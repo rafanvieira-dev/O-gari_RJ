@@ -1,0 +1,24 @@
+*{box-sizing:border-box}
+:root{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#08344c}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#75d2f2}
+#game-shell{position:relative;width:100%;height:100%;min-height:320px}
+canvas{width:100%;height:100%;display:block;touch-action:none}
+#hud{position:absolute;top:12px;left:12px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+.pill{padding:7px 11px;background:#08344ce8;border:2px solid #fff;border-radius:13px;color:white;font-size:clamp(12px,2.5vw,15px);font-weight:850;box-shadow:0 3px #06283a40}
+#level-label{position:absolute;right:12px;top:12px;max-width:58%;padding:9px 12px;background:#fff8e9ed;border:2px solid white;border-radius:13px;text-align:right;font-size:clamp(10px,2.4vw,14px);font-weight:900}
+#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;background:#052c3e55}
+.panel{width:min(540px,100%);padding:clamp(20px,4vw,32px);border:4px solid white;border-radius:24px;background:#fff8e9;text-align:center;box-shadow:0 10px #08344c35}
+.eyebrow{font-size:12px;font-weight:900;letter-spacing:.16em;color:#0879b8;margin:0 0 10px}
+h1{font-size:clamp(38px,9vw,64px);line-height:.9;letter-spacing:-.06em;color:#ff791d;text-shadow:3px 4px #08344c;margin:0 0 18px}
+h1 span{color:#0879b8}
+h2{font-size:clamp(19px,4vw,27px);margin:0 0 10px}
+p{line-height:1.45}
+.instructions{font-size:13px}
+button{font:inherit;font-weight:900;border:0;border-radius:14px;background:#ff791d;color:white;padding:13px 20px;box-shadow:0 4px #c95108;cursor:pointer;touch-action:manipulation}
+button:active{transform:translateY(3px);box-shadow:0 1px #c95108}
+.fineprint{font-size:11px;opacity:.7;margin-bottom:0}
+#touch-controls{position:absolute;left:0;right:0;bottom:max(14px,env(safe-area-inset-bottom));display:none;justify-content:space-between;padding:0 16px;pointer-events:none}
+.control-group{display:flex;gap:10px;pointer-events:auto}
+.touchbtn{pointer-events:auto;width:58px;height:58px;border-radius:50%;padding:0;background:#08344cbd;border:2px solid white;box-shadow:0 4px #0003;font-size:23px;user-select:none;-webkit-user-select:none}
+.touchbtn.jump{width:72px;height:72px;background:#ff791de8;font-size:13px}
+@media(pointer:coarse),(max-width:700px){#touch-controls{display:flex}}
