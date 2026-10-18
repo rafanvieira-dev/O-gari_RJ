@@ -1,4 +1,4 @@
-// Configuração das fases. Cada fase reutiliza o mesmo motor de jogo.
+// Configuração das fases. O motor usa estes dados para criar cada percurso.
 window.GARI_LEVELS = [
  {name:"Praia de Copacabana",short:"PRAIA DE COPACABANA",theme:"beach",length:2900,target:8,
   intro:"A primeira missão é na orla: recolha os resíduos e desvie de sacos e cones.",
