@@ -1,0 +1,6 @@
+{
+  "name": "gari-do-rio",
+  "version": "0.1.0",
+  "description": "Protótipo de plataforma 2D com quatro fases cariocas",
+  "entry": "index.html"
+}

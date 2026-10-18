@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#0879b8">
+  <title>Gari do Rio — Aventura pela Orla</title>
+  <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+  <main id="game-shell">
+    <canvas id="game" aria-label="Jogo Gari do Rio"></canvas>
+    <section id="hud" aria-live="polite">
+      <div class="pill">❤️ <span id="lives">3</span></div>
+      <div class="pill">♻️ <span id="trash">0</span>/<span id="target">8</span></div>
+      <div class="pill">⭐ <span id="score">0</span></div>
+    </section>
+    <div id="level-label">FASE 1 · PRAIA DE COPACABANA</div>
+    <div id="overlay">
+      <div class="panel">
+        <p class="eyebrow">UM JOGO SOBRE O RIO</p>
+        <h1>GARI <span>DO RIO</span></h1>
+        <h2 id="panel-title">Fase 1 — Praia de Copacabana</h2>
+        <p id="panel-copy">Explore a orla, pule os obstáculos e recolha resíduos. Cada fase apresenta uma paisagem carioca diferente.</p>
+        <p class="instructions"><b>Computador:</b> ← → ou A/D para andar · Espaço/↑ para pular<br><b>Celular:</b> use os controles na tela.</p>
+        <button id="start">COMEÇAR A MISSÃO</button>
+        <p class="fineprint">Protótipo jogável · arte conceitual em evolução</p>
+      </div>
+    </div>
+    <nav id="touch-controls" aria-label="Controles por toque">
+      <div class="control-group">
+        <button class="touchbtn" id="left" aria-label="Mover para esquerda">◀</button>
+        <button class="touchbtn" id="right" aria-label="Mover para direita">▶</button>
+      </div>
+      <button class="touchbtn jump" id="jump">PULAR</button>
+    </nav>
+  </main>
+  <script src="src/levels.js"></script>
+  <script src="src/game.js"></script>
+</body>
+</html>
