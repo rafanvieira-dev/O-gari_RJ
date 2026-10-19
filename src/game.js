@@ -5,6 +5,7 @@ const $=id=>document.getElementById(id);
 const W=960,H=540,GROUND=438;
 const ui={lives:$('lives'),trash:$('trash'),score:$('score'),target:$('target'),label:$('level-label'),overlay:$('overlay'),title:$('panel-title'),copy:$('panel-copy'),start:$('start')};
 let scale=1,ox=0,oy=0,levelIndex=0,level,player,items,obstacles,decor,camera=0,score=0,lives=3,collected=0,invuln=0,running=false,last=0,keys={},touch={left:false,right:false};
+const spriteSheet=new Image();let spriteSheetReady=false;spriteSheet.src='assets/sprites/gari-spritesheet.png';spriteSheet.onload=()=>{spriteSheetReady=true};
 const conceptSheet=new Image();conceptSheet.src='assets/sprites/gari-sprite-sheet-conceito.png';
 let spriteCanvas=null,spriteReady=false;
 conceptSheet.onload=()=>{try{
@@ -24,7 +25,7 @@ conceptSheet.onload=()=>{try{
 function resize(){const d=Math.min(devicePixelRatio||1,2);canvas.width=innerWidth*d;canvas.height=innerHeight*d;scale=Math.min(canvas.width/W,canvas.height/H);ox=(canvas.width-W*scale)/2;oy=(canvas.height-H*scale)/2}
 addEventListener('resize',resize);resize();
 function startLevel(idx,keepScore=false){levelIndex=idx;level=GARI_LEVELS[idx];if(!keepScore)score=0;lives=3;collected=0;camera=0;invuln=0;
- player={x:60,y:GROUND-78,w:48,h:78,vx:0,vy:0,onGround:true,face:1};
+ player={x:60,y:GROUND-78,w:48,h:78,vx:0,vy:0,onGround:true,face:1,actionTimer:0};
  items=[];obstacles=[];decor=[];const spacing=level.length/(level.target+2);
  for(let i=1;i<=level.target+2;i++)items.push({x:Math.round(i*spacing),y:GROUND-25,type:['bottle','paper','can'][i%3],got:false});
  for(let x=380;x<level.length-100;x+=230)if(Math.floor(x/230)%3!==1)obstacles.push({x,w:Math.floor(x/230)%2?42:48,h:Math.floor(x/230)%2?36:29,type:Math.floor(x/230)%2?'cone':'bag'});
@@ -39,10 +40,10 @@ addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 function hold(id,p){const el=$(id);el.addEventListener('pointerdown',e=>{e.preventDefault();touch[p]=true});['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev,e=>{e.preventDefault();touch[p]=false}))}
 hold('left','left');hold('right','right');$('jump').addEventListener('pointerdown',e=>{e.preventDefault();jump()});
 function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
-function update(dt){if(!running)return;const l=keys.arrowleft||keys.a||touch.left,r=keys.arrowright||keys.d||touch.right;player.vx=(r?270:0)-(l?270:0);if(player.vx)player.face=Math.sign(player.vx);player.x=Math.max(0,Math.min(level.length-player.w,player.x+player.vx*dt));player.vy+=1500*dt;player.y+=player.vy*dt;if(player.y+player.h>=GROUND){player.y=GROUND-player.h;player.vy=0;player.onGround=true}if(invuln>0)invuln-=dt;
+function update(dt){if(!running)return;const l=keys.arrowleft||keys.a||touch.left,r=keys.arrowright||keys.d||touch.right;player.vx=(r?270:0)-(l?270:0);if(player.vx)player.face=Math.sign(player.vx);player.x=Math.max(0,Math.min(level.length-player.w,player.x+player.vx*dt));player.vy+=1500*dt;player.y+=player.vy*dt;if(player.y+player.h>=GROUND){player.y=GROUND-player.h;player.vy=0;player.onGround=true}if(invuln>0)invuln-=dt;if(player.actionTimer>0)player.actionTimer-=dt;
  const p={x:player.x+5,y:player.y+5,w:player.w-10,h:player.h-5};
  for(const o of obstacles)if(hit(p,{x:o.x,y:GROUND-o.h,w:o.w,h:o.h})&&invuln<=0){lives--;invuln=1.2;player.vy=-300;ui.lives.textContent=lives;if(lives<=0){showPanel('TENTE DE NOVO','Os obstáculos venceram desta vez. Volte à fase e tente completar a missão.','RECOMEÇAR',()=>startLevel(levelIndex,true));return}}
- for(const it of items)if(!it.got&&hit(p,{x:it.x-12,y:it.y-15,w:24,h:29})){it.got=true;collected++;score+=100;ui.trash.textContent=collected;ui.score.textContent=score}
+ for(const it of items)if(!it.got&&hit(p,{x:it.x-12,y:it.y-15,w:24,h:29})){it.got=true;collected++;score+=100;player.actionTimer=.32;ui.trash.textContent=collected;ui.score.textContent=score}
  camera=Math.max(0,Math.min(level.length-W,player.x-W*.33));
  if(player.x>level.length-100){score+=collected*25;ui.score.textContent=score;if(levelIndex<GARI_LEVELS.length-1)showPanel('FASE CONCLUÍDA!',`Você terminou ${level.name} e recolheu ${collected} resíduos. Próxima missão: ${GARI_LEVELS[levelIndex+1].name}.`,'PRÓXIMA FASE',()=>startLevel(levelIndex+1,true));else showPanel('CIDADE MAIS LIMPA!',`Você completou as quatro fases do protótipo e recolheu ${collected} resíduos nesta última etapa.`,'JOGAR NOVAMENTE',()=>startLevel(0,false))}
 }
@@ -58,50 +59,19 @@ function drawObstacle(o){const x=o.x-camera,y=GROUND-o.h;if(o.type==='bag'){ctx.
 function drawPlayer(){
  const x=player.x-camera,y=player.y;
  if(invuln>0&&Math.floor(invuln*12)%2===0)return;
- const t=performance.now()/1000, moving=Math.abs(player.vx)>1;
- const phase=t*13, swing=moving&&player.onGround?Math.sin(phase):0;
- const legSwing=player.onGround?(moving?swing*10:Math.sin(t*2)*1.2):0;
- const armSwing=player.onGround?(moving?-swing*9:Math.sin(t*2)*1.5):0;
- const airborne=!player.onGround;
  ctx.save();ctx.translate(x+player.w/2,y);ctx.scale(player.face,1);
- // sombra
- ctx.fillStyle='#0002';ctx.beginPath();ctx.ellipse(0,80,23,5,0,0,Math.PI*2);ctx.fill();
- // pernas animadas: calça azul-marinho, botas e joelhos em movimento
- ctx.lineCap='round';ctx.lineJoin='round';
- const leftLeg=airborne?-5:legSwing,rightLeg=airborne?5:-legSwing;
- ctx.strokeStyle='#263844';ctx.lineWidth=11;
- ctx.beginPath();ctx.moveTo(-8,51);ctx.lineTo(-9+leftLeg*.45,64);ctx.lineTo(-12+leftLeg,70);
- ctx.moveTo(8,51);ctx.lineTo(9+rightLeg*.45,64);ctx.lineTo(12+rightLeg,70);ctx.stroke();
- // botas
- rr(-21+leftLeg,66,19,10,4,'#17262d');rr(3+rightLeg,66,20,10,4,'#17262d');
- ctx.fillStyle='#64717a';ctx.fillRect(-18+leftLeg,68,8,2);ctx.fillRect(6+rightLeg,68,8,2);
- // braços atrás do tronco, com luvas
- ctx.strokeStyle='#bd7951';ctx.lineWidth=9;
- ctx.beginPath();ctx.moveTo(-14,21);ctx.lineTo(-20+armSwing*.55,34);ctx.lineTo(-20+armSwing,43);
- ctx.moveTo(14,21);ctx.lineTo(20-armSwing*.55,34);ctx.lineTo(20-armSwing,43);ctx.stroke();
- rr(-26+armSwing,39,12,11,4,'#24333a');rr(14-armSwing,39,12,11,4,'#24333a');
- // uniforme laranja com contorno
- ctx.fillStyle='#ff791d';ctx.strokeStyle='#a94412';ctx.lineWidth=2;
- ctx.beginPath();ctx.moveTo(-14,13);ctx.quadraticCurveTo(-20,13,-18,24);ctx.lineTo(-14,52);ctx.quadraticCurveTo(0,59,14,52);ctx.lineTo(18,24);ctx.quadraticCurveTo(20,13,14,13);ctx.closePath();ctx.fill();ctx.stroke();
- // faixas refletivas e zíper
- ctx.fillStyle='#fff0c8';ctx.fillRect(-15,32,30,5);ctx.fillRect(-13,47,26,4);
- ctx.strokeStyle='#f8d9a5';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,16);ctx.lineTo(0,29);ctx.stroke();
- // pescoço
- ctx.fillStyle='#9d5b3b';ctx.fillRect(-5,7,10,10);
- // rosto
- ctx.fillStyle='#bd7951';ctx.strokeStyle='#70412f';ctx.lineWidth=1.5;
- ctx.beginPath();ctx.ellipse(0,-4,15,19,0,0,Math.PI*2);ctx.fill();ctx.stroke();
- // cabelo curto
- ctx.fillStyle='#171e22';ctx.beginPath();ctx.moveTo(-15,-7);ctx.quadraticCurveTo(-19,-25,-3,-25);ctx.quadraticCurveTo(12,-27,16,-13);ctx.lineTo(12,-10);ctx.quadraticCurveTo(0,-17,-14,-7);ctx.closePath();ctx.fill();
- // sobrancelhas e olhos
- ctx.strokeStyle='#38251f';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(-10,-8);ctx.lineTo(-4,-9);ctx.moveTo(4,-9);ctx.lineTo(10,-8);ctx.stroke();
- ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(-7,-4,3.2,2.6,0,0,Math.PI*2);ctx.ellipse(7,-4,3.2,2.6,0,0,Math.PI*2);ctx.fill();
- ctx.fillStyle='#252126';ctx.beginPath();ctx.arc(-6,-4,1.5,0,Math.PI*2);ctx.arc(8,-4,1.5,0,Math.PI*2);ctx.fill();
- // barba e sorriso
- ctx.fillStyle='#25272a';ctx.beginPath();ctx.moveTo(-13,2);ctx.quadraticCurveTo(-12,15,0,15);ctx.quadraticCurveTo(12,14,13,2);ctx.lineTo(9,7);ctx.quadraticCurveTo(0,11,-9,7);ctx.closePath();ctx.fill();
- ctx.strokeStyle='#fff';ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-6,4);ctx.quadraticCurveTo(0,8,6,4);ctx.stroke();
- // detalhes de luz no uniforme
- ctx.strokeStyle='#ffbd68';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-11,19);ctx.lineTo(-7,28);ctx.moveTo(11,19);ctx.lineTo(7,28);ctx.stroke();
+ ctx.fillStyle='rgba(0,35,48,.22)';ctx.beginPath();ctx.ellipse(0,80,24,5,0,0,Math.PI*2);ctx.fill();
+ if(spriteSheetReady){
+   let frame=0;
+   if(player.actionTimer>0)frame=4;                 // coleta
+   else if(!player.onGround)frame=3;                // salto
+   else if(Math.abs(player.vx)>1)frame=1+(Math.floor(performance.now()/120)%2); // corrida: alterna pernas
+   ctx.imageSmoothingEnabled=true;
+   ctx.drawImage(spriteSheet,frame*48,0,48,64,-30,-5,60,85);
+ }else{
+   // O sprite original está carregando; desenha uma silhueta simples só durante o carregamento.
+   ctx.fillStyle='#ff791d';ctx.fillRect(-14,15,28,39);ctx.fillStyle='#bd7951';ctx.beginPath();ctx.arc(0,4,14,0,Math.PI*2);ctx.fill();
+ }
  ctx.restore();
 }
 function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.setTransform(scale,0,0,scale,ox,oy);background();drawDecor();for(const it of items)drawItem(it);for(const o of obstacles)drawObstacle(o);drawPlayer();rr(300,18,360,10,5,'#08344c55');rr(300,18,360*Math.min(1,player.x/(level.length-W*.4)),10,5,'#ff791d');ctx.fillStyle='#08344c';ctx.font='bold 12px system-ui';ctx.fillText('PROGRESSO',430,43)}
