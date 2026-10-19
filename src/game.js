@@ -55,11 +55,55 @@ function background(){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0
 function drawDecor(){ctx.save();ctx.translate(-camera,0);for(const d of decor){if(d.x<camera-100||d.x>camera+W+100)continue;const x=d.x;if(d.kind==='palm'){ctx.strokeStyle='#89592f';ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(x,GROUND);ctx.lineTo(x+4,GROUND-76);ctx.stroke();ctx.strokeStyle='#1a9a62';ctx.lineWidth=6;for(let i=0;i<6;i++){ctx.beginPath();ctx.moveTo(x+4,GROUND-76);ctx.lineTo(x+Math.cos(i)*42,GROUND-94+Math.sin(i)*15);ctx.stroke()}}else if(d.kind==='umbrella'){ctx.strokeStyle='#777';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,GROUND);ctx.lineTo(x,GROUND-38);ctx.stroke();ctx.fillStyle='#ff9230';ctx.beginPath();ctx.moveTo(x-30,GROUND-38);ctx.lineTo(x,GROUND-57);ctx.lineTo(x+30,GROUND-38);ctx.fill()}else if(d.kind==='house'){rr(x,GROUND-55,44,55,2,'#e8b49a');ctx.fillStyle='#a95e47';ctx.beginPath();ctx.moveTo(x-4,GROUND-55);ctx.lineTo(x+22,GROUND-75);ctx.lineTo(x+48,GROUND-55);ctx.fill();ctx.fillStyle='#6ca9b2';ctx.fillRect(x+8,GROUND-43,9,12);ctx.fillRect(x+27,GROUND-43,9,12)}else if(d.kind==='crate'){rr(x,GROUND-38,40,38,3,'#a77a4b');ctx.strokeStyle='#725332';ctx.strokeRect(x+5,GROUND-32,30,27)}else{rr(x,GROUND-95,42,95,2,'#d6c6ac');ctx.fillStyle='#79aeb7';for(let y=GROUND-85;y<GROUND-8;y+=18)for(let xx=x+7;xx<x+36;xx+=13)ctx.fillRect(xx,y,6,8)}}ctx.restore()}
 function drawItem(it){if(it.got)return;const x=it.x-camera,y=it.y;ctx.save();ctx.translate(x,y);if(it.type==='bottle'){rr(-7,-15,14,27,4,'#61d7ed');ctx.fillStyle='#0879b8';ctx.fillRect(-4,-20,8,6);ctx.fillStyle='#eaffff';ctx.fillRect(-3,-10,3,12)}else if(it.type==='paper'){ctx.fillStyle='#fff7df';ctx.strokeStyle='#c8a96b';ctx.beginPath();ctx.moveTo(-10,-11);ctx.lineTo(7,-14);ctx.lineTo(11,9);ctx.lineTo(-7,12);ctx.closePath();ctx.fill();ctx.stroke()}else{rr(-9,-14,18,27,4,'#e7edf0');ctx.fillStyle='#ff8732';ctx.fillRect(-8,-7,16,7)}ctx.restore()}
 function drawObstacle(o){const x=o.x-camera,y=GROUND-o.h;if(o.type==='bag'){ctx.fillStyle='#17242a';ctx.beginPath();ctx.moveTo(x+7,y+8);ctx.quadraticCurveTo(x-4,y+24,x+8,y+o.h);ctx.lineTo(x+o.w-5,y+o.h);ctx.quadraticCurveTo(x+o.w+4,y+12,x+o.w-9,y+5);ctx.closePath();ctx.fill()}else{ctx.fillStyle='#ff7425';ctx.beginPath();ctx.moveTo(x+o.w/2,y);ctx.lineTo(x+o.w,y+o.h);ctx.lineTo(x,y+o.h);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(x+11,y+17,o.w-22,7)}}
-function drawPlayer(){const x=player.x-camera,y=player.y;if(invuln>0&&Math.floor(invuln*12)%2===0)return;const now=performance.now()/1000;const moving=Math.abs(player.vx)>1;const runPhase=now*14;const bob=player.onGround?(moving?Math.abs(Math.sin(runPhase))*3:Math.sin(now*2)*1):0;const tilt=player.onGround&&moving?Math.sin(runPhase)*0.035:0;const stretch=!player.onGround?Math.max(-0.035,Math.min(0.035,-player.vy/20000)):0;ctx.save();ctx.translate(x+player.w/2,y+bob);ctx.rotate(tilt);ctx.scale(player.face,1+stretch);ctx.fillStyle='#0002';ctx.beginPath();ctx.ellipse(0,80,25,5,0,0,7);ctx.fill();
- if(spriteReady&&spriteCanvas){ctx.imageSmoothingEnabled=true;ctx.drawImage(spriteCanvas,-player.w/2,-3,player.w,player.h+3)}
- else{ // Fallback enquanto a imagem conceitual carrega
- ctx.strokeStyle='#20323b';ctx.lineWidth=9;ctx.lineCap='round';const run=player.onGround?Math.sin(performance.now()*.018)*5:0;ctx.beginPath();ctx.moveTo(-8,51);ctx.lineTo(-10+run,68);ctx.moveTo(8,51);ctx.lineTo(10-run,68);ctx.stroke();rr(-19+run,64,20,10,4,'#17262d');rr(3-run,64,20,10,4,'#17262d');ctx.fillStyle='#ff791d';ctx.strokeStyle='#a94412';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-17,19);ctx.quadraticCurveTo(-20,12,-12,10);ctx.lineTo(12,10);ctx.quadraticCurveTo(20,12,17,20);ctx.lineTo(14,53);ctx.quadraticCurveTo(0,59,-14,53);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#fff0c8';ctx.fillRect(-16,34,32,5);ctx.fillRect(-14,48,28,4);ctx.fillStyle='#bd7951';ctx.beginPath();ctx.ellipse(0,-3,16,20,0,0,7);ctx.fill();ctx.fillStyle='#18242a';ctx.beginPath();ctx.ellipse(0,-15,16,10,0,0,7);ctx.fill();ctx.fillStyle='#25272a';ctx.fillRect(-12,5,24,9)}
- ctx.restore()}
+function drawPlayer(){
+ const x=player.x-camera,y=player.y;
+ if(invuln>0&&Math.floor(invuln*12)%2===0)return;
+ const t=performance.now()/1000, moving=Math.abs(player.vx)>1;
+ const phase=t*13, swing=moving&&player.onGround?Math.sin(phase):0;
+ const legSwing=player.onGround?(moving?swing*10:Math.sin(t*2)*1.2):0;
+ const armSwing=player.onGround?(moving?-swing*9:Math.sin(t*2)*1.5):0;
+ const airborne=!player.onGround;
+ ctx.save();ctx.translate(x+player.w/2,y);ctx.scale(player.face,1);
+ // sombra
+ ctx.fillStyle='#0002';ctx.beginPath();ctx.ellipse(0,80,23,5,0,0,Math.PI*2);ctx.fill();
+ // pernas animadas: calça azul-marinho, botas e joelhos em movimento
+ ctx.lineCap='round';ctx.lineJoin='round';
+ const leftLeg=airborne?-5:legSwing,rightLeg=airborne?5:-legSwing;
+ ctx.strokeStyle='#263844';ctx.lineWidth=11;
+ ctx.beginPath();ctx.moveTo(-8,51);ctx.lineTo(-9+leftLeg*.45,64);ctx.lineTo(-12+leftLeg,70);
+ ctx.moveTo(8,51);ctx.lineTo(9+rightLeg*.45,64);ctx.lineTo(12+rightLeg,70);ctx.stroke();
+ // botas
+ rr(-21+leftLeg,66,19,10,4,'#17262d');rr(3+rightLeg,66,20,10,4,'#17262d');
+ ctx.fillStyle='#64717a';ctx.fillRect(-18+leftLeg,68,8,2);ctx.fillRect(6+rightLeg,68,8,2);
+ // braços atrás do tronco, com luvas
+ ctx.strokeStyle='#bd7951';ctx.lineWidth=9;
+ ctx.beginPath();ctx.moveTo(-14,21);ctx.lineTo(-20+armSwing*.55,34);ctx.lineTo(-20+armSwing,43);
+ ctx.moveTo(14,21);ctx.lineTo(20-armSwing*.55,34);ctx.lineTo(20-armSwing,43);ctx.stroke();
+ rr(-26+armSwing,39,12,11,4,'#24333a');rr(14-armSwing,39,12,11,4,'#24333a');
+ // uniforme laranja com contorno
+ ctx.fillStyle='#ff791d';ctx.strokeStyle='#a94412';ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(-14,13);ctx.quadraticCurveTo(-20,13,-18,24);ctx.lineTo(-14,52);ctx.quadraticCurveTo(0,59,14,52);ctx.lineTo(18,24);ctx.quadraticCurveTo(20,13,14,13);ctx.closePath();ctx.fill();ctx.stroke();
+ // faixas refletivas e zíper
+ ctx.fillStyle='#fff0c8';ctx.fillRect(-15,32,30,5);ctx.fillRect(-13,47,26,4);
+ ctx.strokeStyle='#f8d9a5';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,16);ctx.lineTo(0,29);ctx.stroke();
+ // pescoço
+ ctx.fillStyle='#9d5b3b';ctx.fillRect(-5,7,10,10);
+ // rosto
+ ctx.fillStyle='#bd7951';ctx.strokeStyle='#70412f';ctx.lineWidth=1.5;
+ ctx.beginPath();ctx.ellipse(0,-4,15,19,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+ // cabelo curto
+ ctx.fillStyle='#171e22';ctx.beginPath();ctx.moveTo(-15,-7);ctx.quadraticCurveTo(-19,-25,-3,-25);ctx.quadraticCurveTo(12,-27,16,-13);ctx.lineTo(12,-10);ctx.quadraticCurveTo(0,-17,-14,-7);ctx.closePath();ctx.fill();
+ // sobrancelhas e olhos
+ ctx.strokeStyle='#38251f';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(-10,-8);ctx.lineTo(-4,-9);ctx.moveTo(4,-9);ctx.lineTo(10,-8);ctx.stroke();
+ ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(-7,-4,3.2,2.6,0,0,Math.PI*2);ctx.ellipse(7,-4,3.2,2.6,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#252126';ctx.beginPath();ctx.arc(-6,-4,1.5,0,Math.PI*2);ctx.arc(8,-4,1.5,0,Math.PI*2);ctx.fill();
+ // barba e sorriso
+ ctx.fillStyle='#25272a';ctx.beginPath();ctx.moveTo(-13,2);ctx.quadraticCurveTo(-12,15,0,15);ctx.quadraticCurveTo(12,14,13,2);ctx.lineTo(9,7);ctx.quadraticCurveTo(0,11,-9,7);ctx.closePath();ctx.fill();
+ ctx.strokeStyle='#fff';ctx.lineWidth=1.8;ctx.beginPath();ctx.moveTo(-6,4);ctx.quadraticCurveTo(0,8,6,4);ctx.stroke();
+ // detalhes de luz no uniforme
+ ctx.strokeStyle='#ffbd68';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-11,19);ctx.lineTo(-7,28);ctx.moveTo(11,19);ctx.lineTo(7,28);ctx.stroke();
+ ctx.restore();
+}
 function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);ctx.setTransform(scale,0,0,scale,ox,oy);background();drawDecor();for(const it of items)drawItem(it);for(const o of obstacles)drawObstacle(o);drawPlayer();rr(300,18,360,10,5,'#08344c55');rr(300,18,360*Math.min(1,player.x/(level.length-W*.4)),10,5,'#ff791d');ctx.fillStyle='#08344c';ctx.font='bold 12px system-ui';ctx.fillText('PROGRESSO',430,43)}
 function loop(t){if(!running)return;const dt=Math.min((t-last)/1000,.033);last=t;update(dt);draw();if(running)requestAnimationFrame(loop)}
 startLevel(0);running=false;draw();ui.overlay.style.display='flex';
